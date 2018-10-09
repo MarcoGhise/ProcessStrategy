@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:listener-config name="httpListener" host="0.0.0.0" port="8082" doc:name="HTTP Listener Configuration"/>
+    <asynchronous-processing-strategy name="Asynchronous_Processing_Strategy" maxThreads="32" minThreads="16" doc:name="Asynchronous Processing Strategy"/>
+
+<flow name="publish">
+        <http:listener path="/msg"  config-ref="httpListener" doc:name="HTTP"/>
+        <set-payload value="#[message.inboundProperties.'http.query.params'.name]" doc:name="Set Payload"/>
+        <vm:outbound-endpoint exchange-pattern="one-way"  doc:name="VM" path="myQueue"/>
+      
+        <logger doc:name="Logger" level="INFO" message="Sent #[message.payload]"/>
+    </flow>
+    <flow name="listener" processingStrategy="Asynchronous_Processing_Strategy">
+        <vm:inbound-endpoint exchange-pattern="one-way" path="myQueue" doc:name="VM"/>
+        <component class="it.iol.mule.component.SleepProcess" doc:name="Sleep"/>
+        <logger message="Received #[message.payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>
+
